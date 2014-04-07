@@ -18,7 +18,7 @@ class PDFReader(object):
     def __init__(self, outfp=sys.stdout):
 
         self.rsrcmgr = PDFResourceManager()
-        self.device = UnicodeTextConverter(self.rsrcmgr, outfp)
+        self.device = TextConverter(self.rsrcmgr, outfp)
 
     def read(self, filename):
         """ Reads the given PDF and outputs text to the supplied outfp """
@@ -37,9 +37,5 @@ class PDFReader(object):
 if __name__ == '__main__':
     filename = sys.argv[1]
 
-    stream = io.StringIO()
-
-    reader = PDFReader(outfp=stream)
+    reader = PDFReader()
     reader.read(filename)
-
-    print stream.getvalue()
