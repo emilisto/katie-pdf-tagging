@@ -1,41 +1,36 @@
 import sys
 import io
 
-from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.pdfpage import PDFPage
-from pdfminer.converter import TextConverter, HTMLConverter
+from pdfminer.converter import TextConverter
 from pdfminer.layout import LAParams
-from pdfminer.image import ImageWriter
 
 class UnicodeTextConverter(TextConverter):
+    """ Writes text in unicode instead of str """
     def write_text(self, text):
-        self.outfp.write(text.decode(self.codec))
+        if type(text) is str:
+            text = text.decode(self.codec)
+        self.outfp.write(text)
 
-class PDFReader(object):
-    """ PDFReader - convert PDF's to text. """
+def pdf_to_str(filename):
+    """ Takes a PDF filename and returns its contents in unicode """
 
-    def __init__(self, outfp=sys.stdout):
+    buf = io.StringIO()
 
-        self.rsrcmgr = PDFResourceManager()
-        self.device = TextConverter(self.rsrcmgr, outfp)
+    laparams = LAParams()
+    rsrcmgr = PDFResourceManager()
+    device = UnicodeTextConverter(rsrcmgr, buf, laparams=laparams)
 
-    def read(self, filename):
-        """ Reads the given PDF and outputs text to the supplied outfp """
+    with file(filename, 'rb') as fp:
+        interpreter = PDFPageInterpreter(rsrcmgr, device)
+        for page in PDFPage.get_pages(fp, set(), check_extractable=True):
+            interpreter.process_page(page)
 
-        pagenos     = set()
-        maxpages    = 0
-        layoutmode  = 'normal'
-        scale       = 1
+    return buf.getvalue()
 
-        with file(filename, 'rb') as fp:
-
-            interpreter = PDFPageInterpreter(self.rsrcmgr, self.device)
-            for page in PDFPage.get_pages(fp, pagenos, check_extractable=True):
-                interpreter.process_page(page)
 
 if __name__ == '__main__':
     filename = sys.argv[1]
-
-    reader = PDFReader()
-    reader.read(filename)
+    content = pdf_to_str(filename)
+    print content
