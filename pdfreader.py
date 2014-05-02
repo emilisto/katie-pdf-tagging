@@ -1,3 +1,4 @@
+import string
 import sys
 import io
 
@@ -13,6 +14,10 @@ class UnicodeTextConverter(TextConverter):
             text = text.decode(self.codec)
         self.outfp.write(text)
 
+def _strip_non_printable_chars(s):
+    """ Returns s with all non-printable characters removed """
+    return filter(lambda x: x in string.printable, s)
+
 def read_pdf(filename):
     """ Yields the content of a PDF """
 
@@ -27,7 +32,7 @@ def read_pdf(filename):
         for page in PDFPage.get_pages(fp, set(), check_extractable=True):
             buf.truncate(0)
             interpreter.process_page(page)
-            yield buf.getvalue()
+            yield _strip_non_printable_chars(buf.getvalue())
 
 def pdf_to_str(filename):
     """ Returns the contents of a PDF as a unicode string """
